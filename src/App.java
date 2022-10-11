@@ -10,7 +10,8 @@ enum MenuOptions {
     NOOP(0),
     BOOK(1),
     CANCEL(2),
-    EXIT(3);
+    LIST(3),
+    EXIT(4);
 
     private final int value;
 
@@ -35,7 +36,8 @@ enum MenuOptions {
     public static void printMenu() {
         System.out.println("   1) Reservar entradas");
         System.out.println("   2) Anular una reserva");
-        System.out.println("   3) Salir");
+        System.out.println("   3) Listar una reserva");
+        System.out.println("   4) Salir");
     }
 }
 
@@ -51,7 +53,9 @@ public class App {
         Exception error  = null;
 
         do {
-            clearScreen();
+            if (option != MenuOptions.LIST) {
+                clearScreen();
+            }
 
             if (error != null) {
                 System.err.println("Se ha producido un error. Motivo:\t" + error.getMessage());
@@ -88,16 +92,15 @@ public class App {
                 }
                 case CANCEL -> cancel(scan);
                 case EXIT   -> System.out.println("¡Hasta luego!");
+                case LIST   -> baptisterio.printReservations();
                 case NOOP   -> {}
             }
         } while (option != MenuOptions.EXIT);
 
         scan.close();
     }
-
-
-    private static void book (Scanner scan) throws Exception, DateTimeException {
-        System.out.println("¿Qué día quieres reservar? (YYYY-MM-DD)");
+    private static LocalDate readDate(Scanner scan) throws DateTimeException{
+        System.out.println("¿Qué día quieres comprobar? (YYYY-MM-DD)");
         System.out.print("> ");
 
         scan.nextLine();
@@ -110,14 +113,9 @@ public class App {
         catch (DateTimeParseException e) {
             throw new DateTimeException("La fecha introducida es inválida");
         }
-        if (date.isBefore(LocalDate.now())) {
-            throw new DateTimeException("No puedes reservar entradas para días pasados");
-        }
-        if (!baptisterio.avaliable(date)) {
-            throw new Exception("La fecha introducida no está disponible");
-        }
-
-
+        return date;
+    }
+    private static User readUser(Scanner scan){
         System.out.println("¿Cuál es tu nombre?");
         System.out.print("> ");
         String name = scan.nextLine();
@@ -127,6 +125,26 @@ public class App {
         String dni = scan.nextLine();
 
         User user = new User(name, dni);
+        return user;
+    }
+    private static void book (Scanner scan) throws Exception, DateTimeException {
+        LocalDate date = null;
+
+        try {
+            date = readDate(scan);
+        }
+        catch (DateTimeException e) {
+            throw e;
+        }
+
+        if (date.isBefore(LocalDate.now())) {
+            throw new DateTimeException("No puedes reservar entradas para días pasados");
+        }
+        if (!baptisterio.avaliable(date)) {
+            throw new Exception("La fecha introducida no está disponible");
+        }
+
+        User user=readUser(scan);
 
         int round     = 0;
         int remaining = baptisterio.PRICE;
@@ -159,8 +177,26 @@ public class App {
         Thread.sleep(2000);
     }
 
-    private static void cancel (Scanner scan) {
+    private static void cancel (Scanner scan) throws InterruptedException {
+        LocalDate date = null;
 
+        try {
+            date = readDate(scan);
+        }
+        catch (DateTimeException e) {
+            throw e;
+        }
+
+        User user = readUser(scan);
+
+        if (baptisterio.cancel(user, date)) {
+            System.out.println("Su cita se ha cancelado con éxito!");
+        }
+        else {
+            System.out.println("No se ha podido cancelar su reserva.");
+        }
+
+        Thread.sleep(2000);
     }
 
 

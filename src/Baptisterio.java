@@ -17,10 +17,14 @@ public class Baptisterio {
     }
 
 
-    public void cancel (User user,LocalDate date){
+    public boolean cancel (User user, LocalDate date) {
         if (reservations.get(date).equals(user)) {
-            reservations.remove(date);
+            if (reservations.remove(date) != null) {
+                return true;
+            }
         }
+
+        return false;
     }
 
 
@@ -43,5 +47,16 @@ public class Baptisterio {
         payments.register(user, date, coins);
         reservations.put(date, user);
         return true;
+    }
+
+    public void printReservations() {
+        System.out.println("Reservas: \n");
+
+        for (LocalDate date : reservations.keySet()) {
+            System.out.println(date + " -> "
+                + reservations.get(date).getName()
+                + " ("+reservations.get(date).getDni() + ")"
+            );
+        }
     }
 }
