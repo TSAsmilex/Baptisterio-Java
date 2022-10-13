@@ -1,3 +1,5 @@
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -5,13 +7,17 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+import javax.security.auth.login.LoginException;
+
 
 enum MenuOptions {
     NOOP(0),
     BOOK(1),
     CANCEL(2),
     LIST(3),
-    EXIT(4);
+    REGISTER_USER(4),
+    LOGIN_USER(5),
+    EXIT(6);
 
     private final int value;
 
@@ -37,17 +43,19 @@ enum MenuOptions {
         System.out.println("   1) Reservar entradas");
         System.out.println("   2) Anular una reserva");
         System.out.println("   3) Listar una reserva");
-        System.out.println("   4) Salir");
+        System.out.println("   4) Registrarse");
+        System.out.println("   5) Login");
+        System.out.println("   6) Salir");
     }
 }
 
 
 public class App {
     static Baptisterio baptisterio = new Baptisterio();
+    static UserDB userDB           = new UserDB();
+    static User user               = null;
 
     public static void main(String[] args) throws Exception {
-        System.out.print("¿¿¿A quién no le va a gustar un buen baptisterio???");
-
         var       option = MenuOptions.NOOP;
         Scanner   scan   = new Scanner(System.in);
         Exception error  = null;
@@ -58,13 +66,18 @@ public class App {
             }
 
             if (error != null) {
-                System.err.println("Se ha producido un error. Motivo:\t" + error.getMessage());
+                System.err.println("Se ha producido un error. Motivo: " + error.getMessage());
             }
 
             error  = null;
             option = MenuOptions.NOOP;
 
-            System.out.println("\n¡Hola! ¿Qué quieres hacer?");
+            if (user != null) {
+                System.out.println("Hola, " + user.getName() + ". ¿Qué quieres hacer?");
+            }
+            else {
+                System.out.println("\n¡Hola! ¿Qué quieres hacer?");
+            }
             MenuOptions.printMenu();
 
             error = null;
@@ -86,19 +99,34 @@ public class App {
                     catch (DateTimeException e) {
                         error = e;
                     }
-                    catch (Exception e) {
+                    catch (LoginException e) {
                         error = e;
                     }
                 }
-                case CANCEL -> cancel(scan);
-                case EXIT   -> System.out.println("¡Hasta luego!");
-                case LIST   -> baptisterio.printReservations();
-                case NOOP   -> {}
+                case CANCEL -> {
+                    try {
+                        cancel(scan);
+                    }
+                    catch (LoginException e) {
+                        error = e;
+                    }
+                }
+                case LIST            -> baptisterio.printReservations();
+                case REGISTER_USER   -> registerUser(scan);
+                case LOGIN_USER      -> login(scan);
+                case EXIT            -> System.out.println("¡Hasta luego!");
+                case NOOP            -> {}
             }
         } while (option != MenuOptions.EXIT);
 
         scan.close();
+
+        if (!userDB.writeDB()) {
+            System.err.println("Ha habido errores escribiendo la base de datos");
+        }
     }
+
+
     private static LocalDateWrapper readDate(Scanner scan) throws DateTimeException{
         System.out.println("¿Qué día quieres comprobar? (YYYY-MM-DD)");
         System.out.print("> ");
@@ -118,8 +146,28 @@ public class App {
     }
 
 
-    private static User readUser(Scanner scan){
-        System.out.println("¿Cuál es tu nombre?");
+    private static boolean login (Scanner scan) throws LoginException {
+        System.out.println("¿Cuál es tu DNI?");
+        System.out.print("> ");
+        String dni = scan.nextLine();
+
+        System.out.println("Escriba su contraseña");
+        System.out.print("> ");
+        String password = scan.nextLine();
+        String hashedPassword = getSHA512(password);
+
+        try {
+            user = userDB.login(dni, hashedPassword);
+        }
+        catch (LoginException e) {
+            throw new LoginException("El usuario o la contraseña son incorrectos");
+        }
+
+        return true;
+    }
+
+    private static boolean registerUser(Scanner scan){
+        System.out.println("Escriba un usuario");
         System.out.print("> ");
         String name = scan.nextLine();
 
@@ -127,12 +175,32 @@ public class App {
         System.out.print("> ");
         String dni = scan.nextLine();
 
-        User user = new User(name, dni);
-        return user;
+        System.out.println("Escriba una contraseña");
+        System.out.print("> ");
+        String password = scan.nextLine();
+        String hashedPassword = getSHA512(password);
+
+        User possibleUser = new User(name, dni, hashedPassword);
+
+        boolean addedCorrectly = userDB.addUser(user);
+
+        if (!addedCorrectly) {
+            throw new InputMismatchException("El usuario ya existe");
+        }
+
+        user = possibleUser;
+
+        return addedCorrectly;
     }
 
 
-    private static void book (Scanner scan) throws Exception, DateTimeException {
+    private static void book (Scanner scan)
+        throws Exception, DateTimeException, LoginException
+    {
+        if (user == null) {
+            throw new LoginException("Debes iniciar sesión para reservar las entradas.");
+        }
+
         LocalDateWrapper date = null;
 
         try {
@@ -148,8 +216,6 @@ public class App {
         if (!baptisterio.avaliable(date)) {
             throw new Exception("La fecha introducida no está disponible");
         }
-
-        User user = readUser(scan);
 
         int round     = 0;
         int remaining = baptisterio.PRICE;
@@ -182,7 +248,12 @@ public class App {
         Thread.sleep(2000);
     }
 
-    private static void cancel (Scanner scan) throws InterruptedException {
+
+    private static void cancel (Scanner scan) throws InterruptedException, LoginException {
+        if (user == null) {
+            throw new LoginException("Debes iniciar sesión para reservar las entradas.");
+        }
+
         LocalDateWrapper date = null;
 
         try {
@@ -191,8 +262,6 @@ public class App {
         catch (DateTimeException e) {
             throw e;
         }
-
-        User user = readUser(scan);
 
         if (baptisterio.cancel(user, date)) {
             System.out.println("Su cita se ha cancelado con éxito!");
@@ -205,8 +274,27 @@ public class App {
     }
 
 
+    // ─────────────────────────────────────────────────────────────────────────────
+
+
     static void clearScreen() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
+    }
+
+
+    public static String getSHA512(String input){
+        String toReturn = null;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            digest.reset();
+            digest.update(input.getBytes("utf8"));
+            toReturn = String.format("%0128x", new BigInteger(1, digest.digest()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return toReturn;
     }
 }
