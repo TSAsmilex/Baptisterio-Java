@@ -1,3 +1,5 @@
+package com.curso.baptisterio.java;
+
 public class TransactionRecord {
     private User user;
     private LocalDateWrapper date;

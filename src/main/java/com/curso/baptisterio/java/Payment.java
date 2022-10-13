@@ -1,3 +1,4 @@
+package com.curso.baptisterio.java;
 import java.util.ArrayList;
 
 public class Payment {
