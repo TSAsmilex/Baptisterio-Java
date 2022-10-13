@@ -1,3 +1,4 @@
+package com.curso.baptisterio.java;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -53,7 +54,7 @@ public class Baptisterio {
 
         for (var date : reservations.keySet()) {
             System.out.println(date + " -> "
-                + reservations.get(date).getName()
+                + reservations.get(date).getUserName()
                 + " ("+reservations.get(date).getDni() + ")"
             );
         }

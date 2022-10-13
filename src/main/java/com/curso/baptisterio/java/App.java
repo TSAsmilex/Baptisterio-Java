@@ -1,3 +1,5 @@
+
+package com.curso.baptisterio.java;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -46,8 +48,14 @@ public class App {
     static Baptisterio baptisterio = new Baptisterio();
 
     public static void main(String[] args) throws Exception {
+        ///////////////////////auth creation
+        
+        AuthSystem auth= new AuthSystem();
+        User logged= auth.run();
+        
+        /////////////////////
         System.out.print("¿¿¿A quién no le va a gustar un buen baptisterio???");
-
+        System.out.println("HOLA "+logged.getUserName());
         var       option = MenuOptions.NOOP;
         Scanner   scan   = new Scanner(System.in);
         Exception error  = null;
@@ -80,9 +88,10 @@ public class App {
             }
 
             switch (option) {
+                    
                 case BOOK -> {
                     try {
-                        book(scan);
+                        book(scan,logged);
                     }
                     catch (DateTimeException e) {
                         error = e;
@@ -91,7 +100,7 @@ public class App {
                         error = e;
                     }
                 }
-                case CANCEL -> cancel(scan);
+                case CANCEL -> cancel(scan,logged);
                 case EXIT   -> System.out.println("¡Hasta luego!");
                 case LIST   -> baptisterio.printReservations();
                 case NOOP   -> {}
@@ -118,21 +127,21 @@ public class App {
     }
 
 
-    private static User readUser(Scanner scan){
-        System.out.println("¿Cuál es tu nombre?");
-        System.out.print("> ");
-        String name = scan.nextLine();
+//    private static User readUser(Scanner scan){
+//        System.out.println("¿Cuál es tu nombre?");
+//        System.out.print("> ");
+//        String name = scan.nextLine();
+//
+//        System.out.println("¿Cuál es tu DNI?");
+//        System.out.print("> ");
+//        String dni = scan.nextLine();
+//
+//        User user = new User(name, dni);
+//        return user;
+//    }
 
-        System.out.println("¿Cuál es tu DNI?");
-        System.out.print("> ");
-        String dni = scan.nextLine();
 
-        User user = new User(name, dni);
-        return user;
-    }
-
-
-    private static void book (Scanner scan) throws Exception, DateTimeException {
+    private static void book (Scanner scan, User logged) throws Exception, DateTimeException {
         LocalDateWrapper date = null;
 
         try {
@@ -149,8 +158,9 @@ public class App {
             throw new Exception("La fecha introducida no está disponible");
         }
 
-        User user = readUser(scan);
-
+        //User user = readUser(scan);
+        User user=logged;
+        
         int round     = 0;
         int remaining = baptisterio.PRICE;
         ArrayList<CoinEuro> coins = new ArrayList<CoinEuro>();
@@ -182,7 +192,7 @@ public class App {
         Thread.sleep(2000);
     }
 
-    private static void cancel (Scanner scan) throws InterruptedException {
+    private static void cancel (Scanner scan, User logged) throws InterruptedException {
         LocalDateWrapper date = null;
 
         try {
@@ -192,7 +202,8 @@ public class App {
             throw e;
         }
 
-        User user = readUser(scan);
+        //User user = readUser(scan);
+        User user = logged; 
 
         if (baptisterio.cancel(user, date)) {
             System.out.println("Su cita se ha cancelado con éxito!");
