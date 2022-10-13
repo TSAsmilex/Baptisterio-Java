@@ -1,11 +1,9 @@
-import java.time.LocalDate;
-
 public class TransactionRecord {
     private User user;
-    private LocalDate date;
+    private LocalDateWrapper date;
     private int amount;
 
-    public TransactionRecord(User user, LocalDate date, int amount) {
+    public TransactionRecord(User user, LocalDateWrapper date, int amount) {
         this.user   = user;
         this.date   = date;
         this.amount = amount;
@@ -15,7 +13,7 @@ public class TransactionRecord {
         return user;
     }
 
-    public LocalDate getDate() {
+    public LocalDateWrapper getDate() {
         return date;
     }
 

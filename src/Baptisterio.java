@@ -1,14 +1,13 @@
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Baptisterio {
     static final int PRICE = 400;  // céntimos
-    private HashMap<LocalDate, User> reservations = new HashMap<LocalDate, User>();
+    private HashMap<LocalDateWrapper, User> reservations = new HashMap<>();
     private Payment payments = new Payment();
 
 
-    public boolean avaliable (LocalDate date) {
+    public boolean avaliable (LocalDateWrapper date) {
         if (reservations.containsKey(date)) {
             return false;
         }
@@ -17,7 +16,7 @@ public class Baptisterio {
     }
 
 
-    public boolean cancel (User user, LocalDate date) {
+    public boolean cancel (User user, LocalDateWrapper date) {
         if (reservations.get(date).equals(user)) {
             if (reservations.remove(date) != null) {
                 return true;
@@ -28,7 +27,7 @@ public class Baptisterio {
     }
 
 
-    public boolean pay (User user, LocalDate date, ArrayList<CoinEuro> coins) {
+    public boolean pay (User user, LocalDateWrapper date, ArrayList<CoinEuro> coins) {
         // Comprobar que la fecha está disponible
         if (!avaliable(date)) {
             return false;
@@ -52,7 +51,7 @@ public class Baptisterio {
     public void printReservations() {
         System.out.println("Reservas: \n");
 
-        for (LocalDate date : reservations.keySet()) {
+        for (var date : reservations.keySet()) {
             System.out.println(date + " -> "
                 + reservations.get(date).getName()
                 + " ("+reservations.get(date).getDni() + ")"

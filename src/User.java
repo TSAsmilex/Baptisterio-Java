@@ -3,9 +3,9 @@ public class User {
     private String dni;
     private String name;
 
-    public User(String dni,String name){
-        this.dni=dni;
-        this.name=name;
+    public User(String name, String dni){
+        this.name = name;
+        this.dni  = dni;
     }
 
     public String getDni() {
@@ -24,6 +24,14 @@ public class User {
         this.name = name;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
 
+        User o = (User) obj;
+        return o.getDni().equals(dni) && o.getName().equals(name);
+    }
 
 }

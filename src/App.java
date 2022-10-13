@@ -99,7 +99,7 @@ public class App {
 
         scan.close();
     }
-    private static LocalDate readDate(Scanner scan) throws DateTimeException{
+    private static LocalDateWrapper readDate(Scanner scan) throws DateTimeException{
         System.out.println("¿Qué día quieres comprobar? (YYYY-MM-DD)");
         System.out.print("> ");
 
@@ -113,8 +113,11 @@ public class App {
         catch (DateTimeParseException e) {
             throw new DateTimeException("La fecha introducida es inválida");
         }
-        return date;
+
+        return new LocalDateWrapper(date);
     }
+
+
     private static User readUser(Scanner scan){
         System.out.println("¿Cuál es tu nombre?");
         System.out.print("> ");
@@ -127,8 +130,10 @@ public class App {
         User user = new User(name, dni);
         return user;
     }
+
+
     private static void book (Scanner scan) throws Exception, DateTimeException {
-        LocalDate date = null;
+        LocalDateWrapper date = null;
 
         try {
             date = readDate(scan);
@@ -144,7 +149,7 @@ public class App {
             throw new Exception("La fecha introducida no está disponible");
         }
 
-        User user=readUser(scan);
+        User user = readUser(scan);
 
         int round     = 0;
         int remaining = baptisterio.PRICE;
@@ -178,7 +183,7 @@ public class App {
     }
 
     private static void cancel (Scanner scan) throws InterruptedException {
-        LocalDate date = null;
+        LocalDateWrapper date = null;
 
         try {
             date = readDate(scan);
