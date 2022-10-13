@@ -85,6 +85,7 @@ public class App {
             try {
                 System.out.print("> ");
                 option = MenuOptions.fromValue(scan.nextInt());
+                scan.nextLine();
             }
             catch (InputMismatchException e) {
                 error = new InputMismatchException("Introduce un comando válido.");
@@ -113,7 +114,14 @@ public class App {
                 }
                 case LIST            -> baptisterio.printReservations();
                 case REGISTER_USER   -> registerUser(scan);
-                case LOGIN_USER      -> login(scan);
+                case LOGIN_USER      -> {
+                    try {
+                        login(scan);
+                    }
+                    catch (LoginException e) {
+                        error = e;
+                    }
+                }
                 case EXIT            -> System.out.println("¡Hasta luego!");
                 case NOOP            -> {}
             }
@@ -131,7 +139,6 @@ public class App {
         System.out.println("¿Qué día quieres comprobar? (YYYY-MM-DD)");
         System.out.print("> ");
 
-        scan.nextLine();
         String dateString = scan.nextLine();
         LocalDate date;
 
@@ -182,7 +189,7 @@ public class App {
 
         User possibleUser = new User(name, dni, hashedPassword);
 
-        boolean addedCorrectly = userDB.addUser(user);
+        boolean addedCorrectly = userDB.addUser(possibleUser);
 
         if (!addedCorrectly) {
             throw new InputMismatchException("El usuario ya existe");
